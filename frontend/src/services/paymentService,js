@@ -1,0 +1,21 @@
+import axios from "axios";
+import { createPaymentDB } from "../models/paymentModel.js";
+
+export const initiateTelebirr = async (booking_id, amount) => {
+  // Replace with real Telebirr credentials
+  const payload = {
+    amount,
+    merchantId: process.env.TELEBIRR_MERCHANT_ID,
+    callbackUrl: process.env.TELEBIRR_CALLBACK
+  };
+
+  // This endpoint depends on Telebirr API approval
+  const response = await axios.post(
+    "https://api.telebirr.et/pay",
+    payload
+  );
+
+  await createPaymentDB(booking_id, "telebirr", amount, "pending");
+
+  return response.data;
+};
