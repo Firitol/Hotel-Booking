@@ -1,112 +1,72 @@
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
-const API = "http://localhost:5000";
+const API = process.env.NEXT_PUBLIC_API || "https://hotel-booking-cyqr.onrender.com";
 
-export default function App() {
+function App() {
   const [hotels, setHotels] = useState([]);
-  const [user, setUser] = useState(null);
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [cityId, setCityId] = useState("");
 
-  // Load hotels
   useEffect(() => {
-    fetch(API + "/api/hotels")
-      .then(res => res.json())
-      .then(data => setHotels(data));
-  }, []);
+    fetchHotels(cityId);
+  }, [cityId]);
 
-  // Login
-  const login = async () => {
-    const res = await fetch(API + "/api/auth/login", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(form)
-    });
-
-    const data = await res.json();
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    setUser(data.user);
-  };
-
-  // Booking
-  const book = async (hotel) => {
-    const token = localStorage.getItem("token");
-
-    const res = await fetch(API + "/api/bookings", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token
-      },
-      body: JSON.stringify({
-        room_id: 1,
-        check_in: "2026-03-20",
-        check_out: "2026-03-22"
-      })
-    });
-
-    const booking = await res.json();
-
-    await fetch(API + "/api/payments", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token
-      },
-      body: JSON.stringify({
-        booking_id: booking.id,
-        method: "cash",
-        amount: hotel.price_per_night
-      })
-    });
-
-    alert("Booking successful!");
+  const fetchHotels = async (city_id) => {
+    try {
+      const url = city_id ? `${API}/api/hotels?city_id=${city_id}` : `${API}/api/hotels`;
+      const res = await fetch(url);
+      const data = await res.json();
+      setHotels(data);
+    } catch (err) {
+      console.error("Error fetching hotels:", err);
+    }
   };
 
   return (
-    <div style={{ padding: 20, fontFamily: "Arial" }}>
-      <h1>🏨 Adama Hotel Booking</h1>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold mb-6 text-center">Ethiopian Hotel Booking</h1>
 
-      {/* LOGIN */}
-      {!user && (
-        <div style={{ marginBottom: 20 }}>
-          <input
-            placeholder="Email"
-            onChange={e => setForm({...form, email: e.target.value})}
-          />
-          <input
-            placeholder="Password"
-            type="password"
-            onChange={e => setForm({...form, password: e.target.value})}
-          />
-          <button onClick={login}>Login</button>
-        </div>
-      )}
+      <div className="max-w-md mx-auto mb-6">
+        <select
+          className="w-full border rounded p-3"
+          onChange={(e) => setCityId(e.target.value)}
+          value={cityId}
+        >
+          <option value="">All Cities</option>
+          <option value="1">Adama</option>
+          <option value="2">Addis Ababa</option>
+          <option value="3">Hawassa</option>
+        </select>
+      </div>
 
-      {/* USER INFO */}
-      {user && (
-        <div>
-          <p>Welcome, {user.name} ({user.role})</p>
-        </div>
-      )}
-
-      {/* HOTELS */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-        {hotels.map(hotel => (
-          <div key={hotel.id} style={{ border: "1px solid #ccc", padding: 10 }}>
-            <img src={hotel.image} alt="" width="100%" height="150" />
-            <h3>{hotel.name}</h3>
-            <p>{hotel.location}</p>
-            <p>{hotel.price_per_night} ETB</p>
-
-            {user && (
-              <button onClick={() => book(hotel)}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {hotels.length > 0 ? (
+          hotels.map((hotel) => (
+            <div
+              key={hotel.id}
+              className="bg-white rounded shadow p-4 flex flex-col"
+            >
+              <img
+                src={hotel.image || "https://via.placeholder.com/300"}
+                alt={hotel.name}
+                className="w-full h-48 object-cover rounded mb-4"
+              />
+              <h2 className="text-xl font-semibold">{hotel.name}</h2>
+              <p className="text-gray-600 mt-1">{hotel.city_name}</p>
+              <p className="mt-2 font-bold">{hotel.price_per_night} ETB / night</p>
+              <button
+                className="mt-auto bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+                onClick={() => alert(`Booked ${hotel.name}`)}
+              >
                 Book Now
               </button>
-            )}
-          </div>
-        ))}
+            </div>
+          ))
+        ) : (
+          <p className="col-span-full text-center text-gray-500 mt-4">No hotels found.</p>
+        )}
       </div>
     </div>
   );
 }
+
+export default App;
