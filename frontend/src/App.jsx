@@ -1,35 +1,47 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import HotelCard from "./components/HotelCard";
 
-const API = process.env.NEXT_PUBLIC_API || "https://hotel-booking-cyqr.onrender.com";
+const API = process.env.NEXT_PUBLIC_API;
 
-function App() {
+export default function App() {
   const [hotels, setHotels] = useState([]);
   const [cityId, setCityId] = useState("");
 
   useEffect(() => {
-    fetchHotels(cityId);
+    fetchHotels();
   }, [cityId]);
 
-  const fetchHotels = async (city_id) => {
-    try {
-      const url = city_id ? `${API}/api/hotels?city_id=${city_id}` : `${API}/api/hotels`;
-      const res = await fetch(url);
-      const data = await res.json();
-      setHotels(data);
-    } catch (err) {
-      console.error("Error fetching hotels:", err);
-    }
+  const fetchHotels = async () => {
+    const url = cityId
+      ? `${API}/api/hotels?city_id=${cityId}`
+      : `${API}/api/hotels`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    setHotels(data);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">Ethiopian Hotel Booking</h1>
+    <div className="bg-gray-100 min-h-screen">
+      <Header />
 
-      <div className="max-w-md mx-auto mb-6">
+      {/* HERO */}
+      <div className="bg-blue-600 text-white py-16 text-center">
+        <h1 className="text-4xl font-bold mb-4">
+          Find Your Perfect Stay in Ethiopia
+        </h1>
+        <p className="text-lg">
+          Book hotels in Adama, Addis Ababa, Hawassa and more
+        </p>
+      </div>
+
+      {/* FILTER */}
+      <div className="max-w-4xl mx-auto mt-6 px-4">
         <select
-          className="w-full border rounded p-3"
+          className="w-full p-3 border rounded-lg"
           onChange={(e) => setCityId(e.target.value)}
-          value={cityId}
         >
           <option value="">All Cities</option>
           <option value="1">Adama</option>
@@ -38,35 +50,20 @@ function App() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* HOTELS */}
+      <div className="max-w-7xl mx-auto p-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {hotels.length > 0 ? (
           hotels.map((hotel) => (
-            <div
-              key={hotel.id}
-              className="bg-white rounded shadow p-4 flex flex-col"
-            >
-              <img
-                src={hotel.image || "https://via.placeholder.com/300"}
-                alt={hotel.name}
-                className="w-full h-48 object-cover rounded mb-4"
-              />
-              <h2 className="text-xl font-semibold">{hotel.name}</h2>
-              <p className="text-gray-600 mt-1">{hotel.city_name}</p>
-              <p className="mt-2 font-bold">{hotel.price_per_night} ETB / night</p>
-              <button
-                className="mt-auto bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-                onClick={() => alert(`Booked ${hotel.name}`)}
-              >
-                Book Now
-              </button>
-            </div>
+            <HotelCard key={hotel.id} hotel={hotel} />
           ))
         ) : (
-          <p className="col-span-full text-center text-gray-500 mt-4">No hotels found.</p>
+          <p className="col-span-full text-center text-gray-500">
+            No hotels found.
+          </p>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }
-
-export default App;
